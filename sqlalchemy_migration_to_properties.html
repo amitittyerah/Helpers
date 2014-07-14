@@ -9,28 +9,77 @@
 		<textarea id="input" cols=80 rows=30>
 			
 		</textarea>
+		<br/>
+		<input type="checkbox" id="models">Generate model
 		<button id="convert">Convert</button>
+		<br/>
 		<textarea id="output" cols=80 rows=30>
 			
 		</textarea>
 		<script type="text/javascript">
-				$('#convert').click(function (){
-					var content = $('#input').val().trim();
-					var content_lines = content.split("\n");
+				var prop_names = [];
+				var text_between = function (start, stop, str) {
+					console.log(str);
+					var start_pos = str.indexOf(start) + 1;
+					var end_pos =  str.indexOf(stop, start_pos);
+
+					return str.substring(start_pos, end_pos);
+				};
+
+				var last_pos = function (start, stop, str) {
+					var start_pos = str.indexOf(start) + 1;
+					var end_pos =  str.indexOf(stop, start_pos);
+					return end_pos;
+				}
+
+				var get_properties = function (content_lines) {
 					var output = '';
+					prop_names = [];
 					for(var i = 0 ; i < content_lines.length ; i++)
 					{
 						var content_line = content_lines[i].trim();
 						var content_item = content_line.split(',');
-
-						var start_pos = content_item[0].indexOf('\'') + 1;
-						var end_pos =  content_item[0].indexOf('\'', start_pos);
-						var prop_name = content_item[0].substring(start_pos, end_pos);
-						var value = content_line.substring(end_pos + 3, 
+						var prop_name = text_between('\'', '\'', content_item[0]);
+						prop_names.push(prop_name);
+						var value = content_line.substring(last_pos('\'', '\'', content_item[0]) + 3, 
 							content_line.substring(content_line.length-1, content_line.length) !== ',' ? content_line.length : content_line.length-1);
 						console.log(prop_name);
-						output += prop_name + ' = ' + 'Column(' + value + '\n';
+						output += '\t' + prop_name + ' = ' + 'Column(' + value + '\n';
 					}
+					return output;
+				};
+
+				$('#convert').click(function (){
+					var content = $('#input').val().trim();
+					var content_lines = content.split("\n");
+					var output = '';
+					var table_name = '';
+					var properties = '';
+
+					if($('#models').attr('checked', true)) 
+					{
+						console.log('is checked');
+						table_name = text_between('\'', '\'', content_lines[0].trim());
+						properties = get_properties(content_lines.slice(1,content_lines.length-1));
+
+						property_arr = properties.split('=');
+
+						output = '\t__tablename__ = \'' + table_name + '\'\n\n';
+						output += properties;
+						output += '\n\tdef __init__(self):\n\t\tpass\n';
+						output += '\n\tdef as_dict(self):\n\t\treturn {';
+						for(var i = 0 ; i < prop_names.length ; i++)
+						{
+							output += '\n\t\t\t\'' + prop_names[i] +'\': ' + 'self.' + prop_names[i] + ',';
+						}
+						output = output.substring(0, output.length-1) +  '\n\t\t}';
+
+					}
+					else 
+					{
+						output = get_properties(content_lines);
+					}
+					
 					$('#output').val(output);
 				});
 		</script>
