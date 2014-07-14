@@ -1,0 +1,38 @@
+<!DOCTYPE>
+<html>
+	<head>
+		<title>Migration to Properties</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	</head>
+
+	<body>
+		<textarea id="input" cols=80 rows=30>
+			
+		</textarea>
+		<button id="convert">Convert</button>
+		<textarea id="output" cols=80 rows=30>
+			
+		</textarea>
+		<script type="text/javascript">
+				$('#convert').click(function (){
+					var content = $('#input').val().trim();
+					var content_lines = content.split("\n");
+					var output = '';
+					for(var i = 0 ; i < content_lines.length ; i++)
+					{
+						var content_line = content_lines[i].trim();
+						var content_item = content_line.split(',');
+
+						var start_pos = content_item[0].indexOf('\'') + 1;
+						var end_pos =  content_item[0].indexOf('\'', start_pos);
+						var prop_name = content_item[0].substring(start_pos, end_pos);
+						var value = content_line.substring(end_pos + 3, 
+							content_line.substring(content_line.length-1, content_line.length) !== ',' ? content_line.length : content_line.length-1);
+						console.log(prop_name);
+						output += prop_name + ' = ' + 'Column(' + value + '\n';
+					}
+					$('#output').val(output);
+				});
+		</script>
+	</body>
+</html>
